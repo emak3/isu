@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>席替えシミュ</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="classroom-container">
+        <header>
+            <h1><i class="fas fa-school"></i> 席替えシミュ</h1>
+        </header>
+
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" data-tab="seat-selection"><i class="fas fa-map-marker-alt"></i> 希望席選択</div>
+                <div class="tab" data-tab="student-management"><i class="fas fa-users"></i> 生徒リスト</div>
+                <div class="tab" data-tab="seating-assignment"><i class="fas fa-th"></i> 席割り当て</div>
+                <div class="tab" data-tab="settings"><i class="fas fa-cog"></i> 設定</div>
+            </div>
+            
+            <div class="tab-content active" id="seat-selection">
+                <div class="form-group">
+                    <label for="student-name">名前:</label>
+                    <input type="text" id="student-name" placeholder="あなたの名前を入力してください">
+                </div>
+                
+                <div class="selection-status">
+                    <div class="status-item">
+                        <div class="status-color status-red"></div>
+                        <span>第一希望</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-color status-orange"></div>
+                        <span>第二希望</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-color status-green"></div>
+                        <span>第三希望</span>
+                    </div>
+                </div>
+                
+                <div id="message-area"></div>
+                
+                <div class="classroom">
+                    <div class="blackboard">
+                        <span>黒板</span>
+                    </div>
+                    
+                    <div class="teachers-desk">
+                        <div class="desk-icon">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </div>
+                        <span>教卓</span>
+                    </div>
+                    
+                    <div class="seating-grid" id="seating-grid">
+                        <!-- 座席はJavaScriptで動的に生成されます -->
+                    </div>
+                </div>
+                
+                <div class="buttons">
+                    <button id="submit-btn"><i class="fas fa-paper-plane"></i> 希望を提出</button>
+                    <button id="reset-btn" class="secondary"><i class="fas fa-redo"></i> 選択をリセット</button>
+                </div>
+                
+                <div class="sync-status" id="sync-status">
+                    <i class="fas fa-sync"></i> <span id="sync-status-text">接続中...</span>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="student-management">
+                <div class="student-list-container">
+                    <h3><i class="fas fa-user-friends"></i> 生徒リスト</h3>
+                    <ul id="students" class="student-list"></ul>
+                </div>
+                
+                <div class="buttons">
+                    <button id="clear-all-btn" class="secondary danger"><i class="fas fa-trash-alt"></i> 全てクリア</button>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="seating-assignment">
+                <div class="classroom">
+                    <div class="blackboard">
+                        <span>黒板</span>
+                    </div>
+                    
+                    <div class="teachers-desk">
+                        <div class="desk-icon">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </div>
+                        <span>教卓</span>
+                    </div>
+                    
+                    <div class="seating-grid" id="assignment-grid">
+                        <!-- 割り当て後の座席はJavaScriptで動的に生成されます -->
+                    </div>
+                </div>
+                
+                <div class="buttons">
+                    <button id="assign-btn"><i class="fas fa-magic"></i> 席を割り当てる</button>
+                    <button id="assign-random-btn"><i class="fas fa-random"></i> ランダム割り当て</button>
+                    <button id="clear-assignments-btn" class="secondary"><i class="fas fa-broom"></i> 割り当てクリア</button>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="settings">
+                <div class="settings-container">
+                    <h3><i class="fas fa-cog"></i> グリッド設定</h3>
+                    
+                    <div class="grid-settings">
+                        <div class="form-group">
+                            <label for="grid-rows">行数:</label>
+                            <input type="number" id="grid-rows" min="1" max="10" value="5">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="grid-cols">列数:</label>
+                            <input type="number" id="grid-cols" min="1" max="10" value="5">
+                        </div>
+                    </div>
+                    
+                    <button id="update-grid-btn" class="primary"><i class="fas fa-sync-alt"></i> グリッドを更新</button>
+                    
+                    <div class="seat-customization">
+                        <h3><i class="fas fa-edit"></i> 座席のカスタマイズ</h3>
+                        <p class="instruction">無効にしたい座席をクリックしてください。もう一度クリックすると有効になります。</p>
+                        
+                        <div class="seating-grid customization-grid" id="customization-grid">
+                            <!-- カスタマイズ用グリッドはJavaScriptで動的に生成されます -->
+                        </div>
+                    </div>
+                    
+                    <div class="buttons">
+                        <button id="save-config-btn"><i class="fas fa-save"></i> 設定を保存</button>
+                        <button id="reset-config-btn" class="secondary"><i class="fas fa-undo"></i> 設定をリセット</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Socket.ioクライアントライブラリ - CDNから読み込み -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.min.js"></script>
+    
+    <!-- デバッグコンソール（最小化した状態） -->
+    <div id="debug-console" class="debug-console collapsed">
+        <div class="debug-header">
+            <span>デバッグログ</span>
+            <div class="debug-controls">
+                <button id="clear-debug" title="ログをクリア"><i class="fas fa-eraser"></i></button>
+                <button id="toggle-debug" title="表示/非表示"><i class="fas fa-chevron-up"></i></button>
+            </div>
+        </div>
+        <div id="debug-log" class="debug-log"></div>
+    </div>
+    
+    <script>
+        // デバッグ用ロガー
+        function debugLog(message) {
+            console.log(message);
+            const logElem = document.getElementById('debug-log');
+            if (logElem) {
+                const entry = document.createElement('div');
+                entry.textContent = new Date().toLocaleTimeString() + ': ' + message;
+                logElem.appendChild(entry);
+                // 最新のログが見えるようにスクロール
+                logElem.scrollTop = logElem.scrollHeight;
+            }
+        }
+        
+        // デバッグコンソールの表示/非表示切り替え
+        document.getElementById('toggle-debug').addEventListener('click', function() {
+            const debugConsole = document.getElementById('debug-console');
+            debugConsole.classList.toggle('collapsed');
+            this.querySelector('i').classList.toggle('fa-chevron-up');
+            this.querySelector('i').classList.toggle('fa-chevron-down');
+        });
+        
+        // デバッグログのクリア
+        document.getElementById('clear-debug').addEventListener('click', function() {
+            document.getElementById('debug-log').innerHTML = '';
+        });
+        
+        // 本番環境ではデバッグコンソールを完全に削除
+        const isProduction = false; // 開発中はfalse、本番環境ではtrue
+        if (isProduction) {
+            const debugConsole = document.getElementById('debug-console');
+            if (debugConsole) debugConsole.style.display = 'none';
+        }
+    </script>
+    
+    <script src="script.js"></script>
+</body>
+</html>
